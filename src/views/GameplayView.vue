@@ -68,8 +68,8 @@
           <div class="icon-box mb-3">
             <i class="bi bi-emoji-frown display-1 text-danger animate-pulse"></i>
           </div>
-          <h3 class="fw-bold text-white mb-2">زمان تمام شد! ⌛</h3>
-          <p class="text-white-50 mb-4">متأسفانه نتوانستی پازل را در زمان مشخص حل کنی.</p>
+          <h3 class="fw-bold text-white mb-2">⌛زمان تمام شد</h3>
+          <p class="text-white-50 mb-4">متأسفانه نتوانستی پازل را در زمان مشخص حل کنی</p>
 
           <div class="d-flex justify-content-center gap-3">
             <button class="btn btn-warning px-4 py-2 fw-bold" @click="trigger(() => resetGame())">
