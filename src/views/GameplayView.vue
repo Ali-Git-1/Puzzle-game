@@ -125,7 +125,7 @@ const trigger = (action) => {
 
 // تنظیم زمان اولیه هر مرحله
 const initialTime = computed(() => {
-  return 20 + (levelId.value - 1) * 5
+  return 20 + (levelId.value - 1) * 10
 })
 
 const formatTime = (seconds) => {

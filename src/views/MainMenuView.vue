@@ -124,7 +124,7 @@ const trigger = (action) => {
   action()
 }
 
-const showAlert = () => alert('طراحی و توسعه داده شده توسط نینجا')
+const showAlert = () => alert('طراحی و توسعه داده شده توسط علی عربپور')
 const exitGame = () => window.close()
 </script>
 
