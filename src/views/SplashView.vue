@@ -5,7 +5,7 @@
     <div class="logo-box mb-4 animate-bounce">
       <i class="bi bi-controller display-1 text-warning"></i>
     </div>
-    <h2 class="fw-bold mb-3">بازی نینجا</h2>
+    <h2 class="fw-bold mb-3">Puzzle Game</h2>
     <div class="spinner-border text-warning" role="status">
       <span class="visually-hidden">در حال بارگذاری...</span>
     </div>
