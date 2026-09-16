@@ -110,11 +110,7 @@ const windowWidth = ref(window.innerWidth)
 // محاسبه اندازه گرید و برد
 const levelId = computed(() => Number(route.params.id) || 1)
 const gridSize = computed(() => {
-  if (levelId.value === 1) return 2
-  if (levelId.value <= 4) return 3
-  if (levelId.value <= 10) return 4
-  if (levelId.value <= 18) return 5
-  return 6
+  return Math.floor((levelId.value - 1) / 3) + 2
 })
 
 const boardSize = computed(() => Math.min(windowWidth.value * 0.85, 380))
@@ -129,11 +125,7 @@ const trigger = (action) => {
 
 // تنظیم زمان اولیه هر مرحله
 const initialTime = computed(() => {
-  const lvl = levelId.value
-  if (lvl === 1) return 20
-  if (lvl <= 4) return 20 + (lvl - 1) * 10
-  if (lvl <= 10) return 60 + (lvl - 5) * 10
-  return 120 + (lvl - 11) * 15
+  return 20 + (levelId.value - 1) * 5
 })
 
 const formatTime = (seconds) => {
