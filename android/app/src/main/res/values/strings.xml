@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">puzzle</string>
+    <string name="title_activity_main">puzzle</string>
+    <string name="package_name">com.ali.puzzle</string>
+    <string name="custom_url_scheme">com.ali.puzzle</string>
+</resources>
