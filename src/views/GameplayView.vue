@@ -10,7 +10,14 @@
         >
           <i class="bi bi-arrow-left fs-5"></i>
         </button>
-        <div class="coin-badge">🪙 {{ gameStore.coins }}</div>
+        <div class="coin-wrap" :class="{ bump: coinBump }">
+          <div class="coin-badge">🪙 {{ gameStore.coins }}</div>
+
+          <!-- عدد شناور -->
+          <span v-if="coinFxText" :key="coinFxKey" class="coin-fx" :class="coinFxType">
+            {{ coinFxText }}
+          </span>
+        </div>
       </div>
 
       <!-- دقیقاً وسط: تایمر -->
@@ -87,6 +94,11 @@
         <i class="bi bi-trophy-fill text-warning display-3 mb-2"></i>
         <h4 class="fw-bold text-warning mb-2">آفرین! برنده شدی</h4>
         <p class="text-white-50 small mb-4">پازل رو با موفقیت کامل کردی</p>
+        <!-- ✅ داخل مودال برد: -->
+        <div v-if="winCoinDelta > 0" class="coin-delta plus mb-3">
+          <span>🪙 +{{ winCoinDelta }} سکه پاداش</span>
+        </div>
+
         <div class="d-grid gap-2">
           <button class="btn btn-warning fw-bold w-100 py-2" @click="trigger(() => nextLevel())">
             مرحله بعدی
@@ -107,6 +119,10 @@
           </div>
           <h3 class="fw-bold text-white mb-2">⌛زمان تمام شد</h3>
           <p class="text-white-50 mb-4">متأسفانه نتوانستی پازل را در زمان مشخص حل کنی</p>
+          <!-- ✅ داخل مودال باخت: -->
+          <div v-if="loseCoinDelta > 0" class="coin-delta minus mb-4">
+            <span>🪙 -{{ loseCoinDelta }} سکه جریمه</span>
+          </div>
 
           <div class="d-flex justify-content-center gap-3">
             <button class="btn btn-warning px-4 py-2 fw-bold" @click="trigger(() => resetGame())">
@@ -185,8 +201,33 @@ const showWinModal = ref(false)
 const showLoseModal = ref(false)
 const selectedIndex = ref(null)
 const timeLeft = ref(0)
+const winCoinDelta = ref(0)
+const loseCoinDelta = ref(0)
 let timer = null
 const windowWidth = ref(window.innerWidth)
+
+// انیمیشن روی نوار سکه
+const coinFxText = ref('')
+const coinFxType = ref('') // 'plus' | 'minus'
+const coinFxKey = ref(0)
+// اضافه کردن تابع اعمال تغییرات سکه
+const applyCoinDelta = (delta) => {
+  if (delta > 0) {
+    gameStore.addCoins(delta)
+  } else if (delta < 0) {
+    const amount = Math.abs(delta)
+    if (gameStore.deductCoins) gameStore.deductCoins(amount)
+    else if (gameStore.spendCoins) gameStore.spendCoins(amount)
+  }
+
+  coinFxType.value = delta > 0 ? 'plus' : 'minus'
+  coinFxText.value = delta > 0 ? `+${delta}` : `-${Math.abs(delta)}`
+  coinFxKey.value++
+  coinBump.value = true
+  setTimeout(() => (coinBump.value = false), 500)
+}
+
+const coinBump = ref(false)
 
 // پاورآپ ۱: اضافه کردن ۳۰ ثانیه زمان
 function buyExtraTime() {
@@ -266,6 +307,9 @@ const initBoard = () => {
 
   puzzlePieces.value = [...puzzlePieces.value].sort(() => Math.random() - 0.5)
   timeLeft.value = initialTime.value
+  winCoinDelta.value = 0
+  loseCoinDelta.value = 0
+
   startTimer()
 }
 
@@ -281,12 +325,14 @@ const startTimer = () => {
       gameStore.stopGameMusic()
       gameStore.playLose()
       isGameOver.value = true
-      // فقط اگر کاربر در مرحله جدید باخت، ۲ سکه کم کن (نه در مراحل قبلی)
-      if (levelId.value >= gameStore.unlockedLevel) {
-        gameStore.deductCoins(2)
-      }
+      // ✅ فقط این بخش سکه در زمان باخت:
+      loseCoinDelta.value = levelId.value >= gameStore.unlockedLevel ? 2 : 0
+
       setTimeout(() => {
         showLoseModal.value = true
+        if (loseCoinDelta.value > 0) {
+          setTimeout(() => applyCoinDelta(-loseCoinDelta.value), 400)
+        }
       }, 500)
     }
   }, 1000)
@@ -333,22 +379,23 @@ const checkWin = () => {
 const triggerWinEffects = () => {
   isWon.value = true
   isWonAnimation.value = true
-
-  // فعلاً چون فایل مخصوص برد نداری از کلیک استفاده میکنیم
   gameStore.playWin()
 
-  if (levelId.value >= gameStore.unlockedLevel) {
-    gameStore.addCoins(10)
-  }
+  // ✅ ۱. اول ثبت سکه قبل از باز شدن مرحله بعدی
+  winCoinDelta.value = levelId.value >= gameStore.unlockedLevel ? 10 : 0
 
-  confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
-
+  // ✅ ۲. حالا باز کردن مرحله جدید
   if (gameStore.unlockNextLevel) {
     gameStore.unlockNextLevel(levelId.value)
   }
 
+  confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
+
   setTimeout(() => {
     showWinModal.value = true
+    if (winCoinDelta.value > 0) {
+      setTimeout(() => applyCoinDelta(winCoinDelta.value), 400)
+    }
   }, 4000)
 }
 
@@ -395,6 +442,61 @@ watch(levelId, () => {
 </script>
 
 <style scoped>
+.coin-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coin-wrap.bump {
+  animation: coinBump 0.45s ease;
+}
+
+@keyframes coinBump {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.coin-fx {
+  position: absolute;
+  right: -6px;
+  top: -10px;
+  font-weight: 800;
+  opacity: 0;
+  transform: translateY(0);
+  animation: floatUp 0.9s ease forwards;
+  pointer-events: none;
+}
+
+.coin-fx.plus {
+  color: #1ea97c;
+}
+.coin-fx.minus {
+  color: #e74c3c;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1.05);
+  }
+}
+
 .coin-badge {
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 193, 7, 0.5);
@@ -745,5 +847,40 @@ watch(levelId, () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+/* ✅ استایل بج نمایش سکه در مودال برد و باخت */
+.coin-delta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  animation: deltaPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.coin-delta.plus {
+  color: #ffd54a;
+  background: rgba(255, 213, 74, 0.12);
+  border: 1px dashed rgba(255, 213, 74, 0.6);
+}
+
+.coin-delta.minus {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px dashed rgba(255, 107, 107, 0.6);
+}
+
+@keyframes deltaPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>
