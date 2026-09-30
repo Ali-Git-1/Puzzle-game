@@ -93,10 +93,6 @@ export const useGameStore = defineStore('game', {
         winAudio.play().catch(() => {})
       }
     },
-    addCoins(amount) {
-      this.coins += amount
-      localStorage.setItem('puzzle_coins', this.coins.toString())
-    },
 
     spendCoins(amount) {
       if (this.coins >= amount) {

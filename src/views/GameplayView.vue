@@ -281,11 +281,9 @@ const startTimer = () => {
       gameStore.stopGameMusic()
       gameStore.playLose()
       isGameOver.value = true
-      // کسر ۲ سکه در هنگام باخت
-      if (gameStore.deductCoins) {
+      // فقط اگر کاربر در مرحله جدید باخت، ۲ سکه کم کن (نه در مراحل قبلی)
+      if (levelId.value >= gameStore.unlockedLevel) {
         gameStore.deductCoins(2)
-      } else if (gameStore.spendCoins) {
-        gameStore.spendCoins(2)
       }
       setTimeout(() => {
         showLoseModal.value = true
@@ -339,8 +337,7 @@ const triggerWinEffects = () => {
   // فعلاً چون فایل مخصوص برد نداری از کلیک استفاده میکنیم
   gameStore.playWin()
 
-  // اضافه کردن ۱۰ سکه به عنوان پاداش برد
-  if (gameStore.addCoins) {
+  if (levelId.value >= gameStore.unlockedLevel) {
     gameStore.addCoins(10)
   }
 
