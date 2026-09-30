@@ -281,6 +281,12 @@ const startTimer = () => {
       gameStore.stopGameMusic()
       gameStore.playLose()
       isGameOver.value = true
+      // کسر ۲ سکه در هنگام باخت
+      if (gameStore.deductCoins) {
+        gameStore.deductCoins(2)
+      } else if (gameStore.spendCoins) {
+        gameStore.spendCoins(2)
+      }
       setTimeout(() => {
         showLoseModal.value = true
       }, 500)
@@ -332,6 +338,11 @@ const triggerWinEffects = () => {
 
   // فعلاً چون فایل مخصوص برد نداری از کلیک استفاده میکنیم
   gameStore.playWin()
+
+  // اضافه کردن ۱۰ سکه به عنوان پاداش برد
+  if (gameStore.addCoins) {
+    gameStore.addCoins(10)
+  }
 
   confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } })
 

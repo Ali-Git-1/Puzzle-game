@@ -106,5 +106,16 @@ export const useGameStore = defineStore('game', {
       }
       return false
     },
+    // بخشی از actions در gameStore.js
+    addCoins(amount = 10) {
+      this.coins += amount
+      localStorage.setItem('puzzle_coins', this.coins.toString())
+    },
+
+    deductCoins(amount = 2) {
+      // جلوگیری از منفی شدن سکه‌ها
+      this.coins = Math.max(0, this.coins - amount)
+      localStorage.setItem('puzzle_coins', this.coins.toString())
+    },
   },
 })
