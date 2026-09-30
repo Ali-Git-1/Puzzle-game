@@ -1,17 +1,27 @@
 <template>
   <div class="game-wrapper vh-100 d-flex flex-column justify-content-between p-3 text-white">
-    <!-- هدر: دکمه بازگشت، تایمر و دکمه عکس مرحله -->
-    <div class="d-flex justify-content-between align-items-center">
-      <button class="btn btn-outline-light btn-sm rounded-circle" @click="trigger(() => goBack())">
-        <i class="bi bi-arrow-left fs-5"></i>
-      </button>
-
-      <div class="badge bg-danger fs-6 px-3 py-2">
-        <i class="bi bi-stopwatch me-1"></i> {{ formatTime(timeLeft) }}
+    <!-- هدر: دکمه بازگشت و سکه در چپ، تایمر دقیقاً وسط، شماره مرحله و عکس در راست -->
+    <div class="position-relative d-flex justify-content-between align-items-center w-100 mb-2">
+      <!-- سمت چپ: دکمه بازگشت + سکه -->
+      <div class="d-flex align-items-center gap-2 z-2">
+        <button
+          class="btn btn-outline-light btn-sm rounded-circle"
+          @click="trigger(() => goBack())"
+        >
+          <i class="bi bi-arrow-left fs-5"></i>
+        </button>
+        <div class="coin-badge">🪙 {{ gameStore.coins }}</div>
       </div>
 
-      <!-- بالا سمت راست: دکمه پیش‌نمایش عکس + شماره مرحله -->
-      <div class="d-flex align-items-center gap-2">
+      <!-- دقیقاً وسط: تایمر -->
+      <div class="position-absolute start-50 translate-middle-x z-1">
+        <div class="badge bg-danger fs-6 px-3 py-2">
+          <i class="bi bi-stopwatch me-1"></i> {{ formatTime(timeLeft) }}
+        </div>
+      </div>
+
+      <!-- سمت راست: دکمه پیش‌نمایش عکس + شماره مرحله -->
+      <div class="d-flex align-items-center gap-2 z-2">
         <span class="fw-bold text-warning">مرحله {{ levelId }}</span>
         <button
           class="btn-preview-thumb"
@@ -50,6 +60,16 @@
           @click="handleTileClick(index)"
         ></div>
       </div>
+    </div>
+    <!-- دکمه‌های پاورآپ وسط‌چین شده -->
+    <div class="d-flex justify-content-center align-items-center gap-3 my-2">
+      <button class="btn-powerup" :disabled="gameStore.coins < 10" @click="buyExtraTime">
+        ⏳ +30s <small>(-10)</small>
+      </button>
+
+      <button class="btn-powerup" :disabled="gameStore.coins < 25" @click="autoSolveOnePiece">
+        🧩 حل یک تکه <small>(-25)</small>
+      </button>
     </div>
 
     <!-- راهنما ساده -->
@@ -167,6 +187,35 @@ const selectedIndex = ref(null)
 const timeLeft = ref(0)
 let timer = null
 const windowWidth = ref(window.innerWidth)
+
+// پاورآپ ۱: اضافه کردن ۳۰ ثانیه زمان
+function buyExtraTime() {
+  if (gameStore.spendCoins(10)) {
+    timeLeft.value += 30
+  }
+}
+
+// پاورآپ ۲: حل یک تکه از پازل
+function autoSolveOnePiece() {
+  if (isWon.value || isGameOver.value) return
+
+  // پیدا کردن اولین قطعه‌ای که سر جاش نیست
+  const wrongIdx = puzzlePieces.value.findIndex((p, idx) => p.correctIndex !== idx)
+  if (wrongIdx === -1) return
+
+  if (gameStore.spendCoins(25)) {
+    // پیدا کردن قطعه‌ای که باید سر این جایگاه بیاد
+    const targetIdx = puzzlePieces.value.findIndex((p) => p.correctIndex === wrongIdx)
+
+    // جابه‌جایی دو قطعه
+    const temp = puzzlePieces.value[wrongIdx]
+    puzzlePieces.value[wrongIdx] = puzzlePieces.value[targetIdx]
+    puzzlePieces.value[targetIdx] = temp
+
+    // بررسی اتمام پازل
+    checkWin()
+  }
+}
 
 // محاسبه اندازه گرید و برد
 const levelId = computed(() => Number(route.params.id) || 1)
@@ -338,6 +387,57 @@ watch(levelId, () => {
 </script>
 
 <style scoped>
+.coin-badge {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #ffc107;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+}
+
+.btn-powerup {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #ffc107;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+}
+
+.btn-powerup {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-powerup:hover:not(:disabled) {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: #ffc107;
+  color: #ffc107;
+  transform: translateY(-2px);
+}
+
+.btn-powerup:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-powerup small {
+  color: #ffc107;
+  font-size: 0.75rem;
+}
+
 .game-wrapper {
   background: radial-gradient(circle, #1a252f 0%, #0d1117 100%);
   user-select: none;

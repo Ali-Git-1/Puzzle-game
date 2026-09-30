@@ -18,6 +18,7 @@ export const useGameStore = defineStore('game', {
     isMusicMuted: localStorage.getItem('musicMuted') === 'true',
     isSoundMuted: localStorage.getItem('soundMuted') === 'true',
     totalLevels: 25,
+    coins: parseInt(localStorage.getItem('puzzle_coins') || 100),
   }),
   actions: {
     unlockNextLevel(currentLevel) {
@@ -91,6 +92,19 @@ export const useGameStore = defineStore('game', {
         winAudio.currentTime = 0
         winAudio.play().catch(() => {})
       }
+    },
+    addCoins(amount) {
+      this.coins += amount
+      localStorage.setItem('puzzle_coins', this.coins.toString())
+    },
+
+    spendCoins(amount) {
+      if (this.coins >= amount) {
+        this.coins -= amount
+        localStorage.setItem('puzzle_coins', this.coins)
+        return true
+      }
+      return false
     },
   },
 })
